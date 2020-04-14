@@ -61,7 +61,7 @@ class REsearch extends Thread
 					// If the current character doesn't match, this path/branch/whatever is dead. Move on to the next iteration.
 				}
 				// If the deque has no possible future paths, then give up and start from the next character.
-				if (deque.size == 0) failed = true;
+				if (deque.size == 0 || inputIndex == input.length() - 1) failed = true;
 				else deque.tailAddScan();
 				inputIndex++;
 			}
