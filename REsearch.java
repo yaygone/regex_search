@@ -6,11 +6,13 @@ class REsearch extends Thread
 {
 	static List<ParseTableNode> parseTable = new ArrayList<ParseTableNode>();
 	static Deque deque = new Deque();
-	private static final ExecutorService executor = Executors.newFixedThreadPool(16);
+	private static final ExecutorService executor = Executors.newFixedThreadPool(1);
 	
 	/**
 	 * Main class requires two inner classes: 
 	 * one to recreate the FSM, and one for the deque navigation.
+	 * An additional inner class is written to process the pattern 
+	 * matching in order to parallelise the task.
 	 * @author YR
 	 * @param args
 	 */
@@ -32,24 +34,16 @@ class REsearch extends Thread
 		reader = new BufferedReader(new FileReader(inputFile));
 		for (String line = reader.readLine(); line != null; line = reader.readLine())
 			executor.execute(new MatchFinder(line, i++));
-			// findMatch(input.substring())
-			// int searchedIndex = startIndex;
-			// deque = new Deque();
-			// String result = "";
-			// while (true)
-			// {
-			// 	ParseNode currentNode = (Deque.size == 1) ? nodes.get(0) : nodes.get(deque.headRemove());
-			// 	if (currentNode.ch == 0 || currentNode.ch == inputArray[searchedIndex])
-			// 	{
-			// 		deque.tailAdd(currentNode.next1);
-			// 		if (currentNode.isBranching()) deque.tailAdd(currentNode.next2);
-			// 		if (currentNode.ch == inputArray[searchedIndex]) result += inputArray[searchedIndex];
-			// 	}
-			// 	else break;
-			// }
 		reader.close();
+		// TODO halt threads
+		return;
 	}
-
+	
+	/**
+	 * Thread that takes a "line" of text input and looks for matches to the given pattern.
+	 * Subclass enables multithreaded search for parallelisation of multi-line data.
+	 * @author YR
+	 */
 	class MatchFinder implements Runnable
 	{
 		char[] input;
@@ -66,6 +60,7 @@ class REsearch extends Thread
 		{
 			for (int startIndex = 0; startIndex < input.length; startIndex++)
 			{
+				deque = new Deque();
 				int inputIndex = startIndex;
 				boolean failed = false;
 				while (!failed)
@@ -75,7 +70,7 @@ class REsearch extends Thread
 						// If a node in the head side points to -1, that's a successful match.
 						if (parseTableIndex == -1)
 						{
-							System.out.println("Match found in line " + Integer.toString(printLineNumber) + ": \n" + new String(input));
+							System.out.println("Match found in line " + printLineNumber + ": \n" + new String(input));
 							return;
 						}
 
@@ -92,17 +87,16 @@ class REsearch extends Thread
 						else if (poppedHead.ch == input[inputIndex])
 							deque.tailAdd(poppedHead.next1);
 						
-							// If the current character doesn't match, this path/branch/whatever is dead. Move on to the next iteration.
+						// If the current character doesn't match, this path/branch/whatever is dead. Move on to the next iteration.
 					}
 					// If the deque has no possible future paths, then give up and start from the next character.
 					if (deque.size == 0) failed = true;
-					else
-					{
-						inputIndex++;
-						deque.tailAddScan();
-					}
+					else deque.tailAddScan();
+					inputIndex++;
 				}
 			}
+			System.out.println("No match found in line " + printLineNumber);
+			return;
 		}
 	}
 
@@ -144,9 +138,19 @@ class REsearch extends Thread
 		public Deque()
 		{
 			size = 2;
-			head = new DequeNode(0, null, scan);
+			head = new DequeNode(0, null, null);
 			scan = new DequeNode(-2, head, null);
+			head.next = scan;
 			tail = scan;
+		}
+
+		public int clearLastNode()
+		{
+			DequeNode temp = head;
+			head = null;
+			tail = null;
+			size = 0;
+			return temp.tableValue;
 		}
 
 		public void headAdd(int index)
@@ -158,11 +162,12 @@ class REsearch extends Thread
 
 		public int headRemove()
 		{
-			int temp = head.tableValue;
-			head = head.next;
+			if (size == 1) return clearLastNode();
+			DequeNode temp = head;
+			head = temp.next;
 			head.prev = null;
 			size--;
-			return temp;
+			return temp.tableValue;
 		}
 
 		public void tailAdd(int index)
@@ -174,15 +179,29 @@ class REsearch extends Thread
 
 		public int tailRemove()
 		{
-			int temp = tail.tableValue;
-			tail = tail.prev;
+			if (size == 1) return clearLastNode();
+			DequeNode temp = tail;
+			tail = temp.prev;
 			tail.next = null;
 			size--;
-			return temp;
+			return temp.tableValue;
 		}
 		
 		public void tailAddScan()
-		{ tailAdd(-2); }
+		{
+			if (size == 0)
+			{
+				tail = scan;
+				head = scan;
+				size = 1;
+				return;
+			}
+			tail.next = scan;
+			scan.prev = tail;
+			tail = scan;
+			tail.next = null;
+			size++;
+		}
 
 		class DequeNode
 		{
@@ -196,7 +215,6 @@ class REsearch extends Thread
 				prev = prev_;
 				next = next_;
 			}
-
 		}
 	}
 }
