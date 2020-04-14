@@ -8,8 +8,6 @@ class REsearch extends Thread
 	/**
 	 * Main class requires two inner classes: 
 	 * one to recreate the FSM, and one for the deque navigation.
-	 * An additional inner class is written to process the pattern 
-	 * matching in order to parallelise the task.
 	 * @author YR
 	 * @param args
 	 */
@@ -27,11 +25,10 @@ class REsearch extends Thread
 		}
 		reader.close();
 		
-		int i = 1;
 		reader = new BufferedReader(new FileReader(inputFile));
-		List<Future<String>> outputFutures = new ArrayList<>();
+		int lineNumber = 1;
 		for (String line = reader.readLine(); line != null; line = reader.readLine())
-			if (matchFound(line)) System.out.println("Match found in line " + i++ + ": \n" + line);
+			if (matchFound(line)) System.out.println("Match found in line " + lineNumber++ + ": \n" + line);
 		reader.close();
 	}
 	
@@ -58,7 +55,6 @@ class REsearch extends Thread
 					}
 					
 					// If the current character matches, then add the head's next to tail for future.
-					// TODO check this assumption is correct: "All non-null check nodes only have one possible next pointer."
 					else if (poppedHead.ch == input.charAt(inputIndex))
 						deque.tailAdd(poppedHead.next1);
 					
