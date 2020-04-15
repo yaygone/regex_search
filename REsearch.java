@@ -54,8 +54,8 @@ class REsearch extends Thread
 						if (poppedHead.isBranching()) deque.headAdd(poppedHead.next2);
 					}
 					
-					// If the current character matches, then add the head's next to tail for future.
-					else if (poppedHead.ch == input.charAt(inputIndex))
+					// If the current character matches, or is a wildcard, then add the head's next to tail for future.
+					else if (poppedHead.ch == input.charAt(inputIndex) || poppedHead.ch == '.')
 						deque.tailAdd(poppedHead.next1);
 					
 					// If the current character doesn't match, this path/branch/whatever is dead. Move on to the next iteration.
