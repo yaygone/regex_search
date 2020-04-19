@@ -4,22 +4,14 @@ class REcompile {
 
     private final char BRANCH_SYMBOL = '~';
     private final char END_SYMBOL = ';';
+    private final char DUMMY_SYMBOL = ',';
 
-    
     private int state = 1; //Start at state number 1
-
-    //private int result = 0;
     private int start;
     private int position = 0;
-    
-    // private ArrayList<Character> characters = new ArrayList<Character>();
-    // private ArrayList<Integer> next1 = new ArrayList<Integer>();
-    // private ArrayList<Integer> next2 = new ArrayList<Integer>();
-
     private char[] characters;
     private int[] next1;
     private int[] next2;
-
     private static char[] splitExpression;
 
 
@@ -43,17 +35,10 @@ class REcompile {
     }
 
     private void setState(int s, char c, int n1, int n2) {
-        
-            // characters.add(s, c);
-            // next1.add(s, n1);
-            // next2.add(s, n2);
 
             characters[s] = c;
             next1[s] = n1;
-            next2[s] = n2;
-
-            System.out.println("State: " + s + " Char: " + c + " N1: " + n1 + " N2: " + n2);
-        
+            next2[s] = n2;        
     }
 
     private void compile() {
@@ -63,49 +48,43 @@ class REcompile {
         next2 = new int[splitExpression.length * 2];
 
         int start = expression();
-        
 
+        setState(0, ' ', start, start);
 
+        for (int i = 0; i < characters.length; i++) {
+            System.out.println("State: " + i + " Char: " + characters[i] + " N1: " + next1[i] + " N2: " + next2[i]);
+        }
     }
 
     private int expression() {
 
         int response;
 
-        if(position >= splitExpression.length - 1) {
-
-            response = state;
-            setState(state, END_SYMBOL, 0, 0);
-
-        } else {
-            
-
             //Get the term
             response = term();
+
+            if(position < splitExpression.length) {
+                //Check if it's in the vocab, or if it's an opening bracket
+                if (isInVocab(splitExpression[position]) || splitExpression[position] == '(') {
+                    //Start a new expression
+                    expression();
+                }
     
-            //Check if it's in the vocab, or if it's an opening bracket
-            if (isInVocab(splitExpression[position]) || splitExpression[position] == '(') {
-                //Start a new expression
-                expression();
+            } else {
+    
+                setState(state, END_SYMBOL, 0, 0);
+
             }
-    
-        }
-
         return response;
-
-       
-
-
     }
 
     private int term() {
 
-        int t1, t2, prevState;
-
-        int response = t1 = factor();
+        int prevState = state - 1;
+        int response = factor();
         
-        prevState = state - 1;
-
+        
+        if (position < splitExpression.length) {
         //Case for closure
         if(splitExpression[position] == '*') {
             position++;
@@ -118,18 +97,34 @@ class REcompile {
 
         //Case for disjunction
         if(splitExpression[position] == '|') {
-            int initialState = state;
-            int branchState = state + 1;
+
+            //Re-set the next values for whatever state was added before the disjunction
+            if (next1[prevState] == response) {
+                next1[prevState] = state;
+            } else {
+                next2[prevState] = state;
+            }
+
+            //Setup the disjunction state
+            //One next points to the symbol just added, the next points to the state that is about to be created
+            setState(state, BRANCH_SYMBOL, response, state + 1);
             state++;
-            int state2 = term();
+            position++;
 
-            //Set the branching states
-            setState(branchState, BRANCH_SYMBOL, response, state2);
-            setState(initialState, BRANCH_SYMBOL, state, state);
+            //Create the first term that begins after the disjunction
+            int newTerm = term();
 
-            return branchState;
+            //Setup the dummy state
+            setState(state, DUMMY_SYMBOL, state + 1, state + 1);
+
+            //Point the end of the first part of the disjunction to the dummy state
+            next1[response] = next2[response] = state;
+            state++;
+
+            return newTerm;
 
         }
+    }
 
 
         return response;
@@ -139,29 +134,28 @@ class REcompile {
     private int factor(){
 
         int response = 0;
-        char currentSymbol = splitExpression[position];
 
         //If it's in the vocab, set the state, and then continue to the next character
-        if(isInVocab(currentSymbol)) {
-            setState(state, currentSymbol, state + 1, state + 1);
+        if(isInVocab(splitExpression[position])) {
+            setState(state, splitExpression[position], state + 1, state + 1);
             position++;
             response = state;
             state++;
         } else {
             //For an opening bracket, go to next char, create a new expression
-            if(currentSymbol == '(') {
+            if(splitExpression[position] == '(') {
                 position++;
                 response = expression();
             
-            //Check that the bracket was closed, and then move on
-            if(currentSymbol == ')') {
-                position++;
+                //Check that the bracket was closed, and then move on
+                if(splitExpression[position] == ')') {
+                    position++;
+
+                } else { throwError(splitExpression[position]); }
+
             } else {
-                throwError();
+                throwError(splitExpression[position]);
             }
-        } else {
-            throwError();
-        }
         }
 
         return response;
@@ -173,8 +167,8 @@ class REcompile {
         return false;
     }
 
-    private void throwError() {
-        System.out.println("Error occured with Regex");
+    private void throwError(char symbol) {
+        System.out.println("Error occured with Regex at symbol " + symbol);
         return;
     }
 
