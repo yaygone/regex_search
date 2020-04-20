@@ -16,25 +16,34 @@ class REcompile {
 
 
     public static void main(String[] args) {
-
-        
-
-
         if (args.length != 1) {
             System.out.println("Usage: REcompile <\"expression\">)");
-            return;
-        }
+            return; }
 
         //Get input from the user
         splitExpression = args[0].toCharArray();
         REcompile compiler = new REcompile();
 
-        compiler.compile();        
-
-
+        compiler.compile(); 
     }
 
     private void setState(int s, char c, int n1, int n2) {
+
+            //If arrays are full, extend the arrays
+            if(s >= characters.length) {
+                char[] newChar = new char[s + 1];
+                int[] newN1 = new int[s + 1];
+                int[] newN2 = new int[s + 1];
+                
+                System.arraycopy(characters, 0, newChar, 0, characters.length);
+                System.arraycopy(next1, 0, newN1, 0, next1.length);
+                System.arraycopy(next2, 0, newN2, 0, next2.length);
+
+                characters = newChar;
+                next1 = newN1;
+                next2 = newN2;
+
+            }
 
             characters[s] = c;
             next1[s] = n1;
@@ -43,9 +52,9 @@ class REcompile {
 
     private void compile() {
 
-        characters = new char[splitExpression.length * 2];
-        next1 = new int[splitExpression.length * 2];
-        next2 = new int[splitExpression.length * 2];
+        characters = new char[splitExpression.length];
+        next1 = new int[splitExpression.length];
+        next2 = new int[splitExpression.length];
 
         int start = expression();
 
