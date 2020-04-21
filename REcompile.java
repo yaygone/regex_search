@@ -133,6 +133,26 @@ class REcompile {
             return newTerm;
 
         }
+
+        //Case for zero or one times
+        if(splitExpression[position] == '?') {
+
+            //Get the state of the symbol that was just added
+            prevState = state - 1;
+
+            //Create the new branching state, one pointing towards the symbol just added, and another pointing to the next symbol to be added
+            position++;
+            setState(state, BRANCH_SYMBOL, state - 1, state + 1);
+            state++;
+            
+            //Set the symbol preceding the ? symbol to point towards the next state
+            setState(prevState, characters[prevState], state, state);
+
+            //Return the zero/one branching state
+            return state - 1;
+
+        }
+
     }
 
 
