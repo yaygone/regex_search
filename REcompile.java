@@ -2,9 +2,9 @@ import java.util.*;
 
 class REcompile {
 
-    private final char BRANCH_SYMBOL = '~';
-    private final char END_SYMBOL = ';';
-    private final char DUMMY_SYMBOL = ',';
+    private final char BRANCH_SYMBOL = '\0';
+    private final char END_SYMBOL = '\0';
+    private final char DUMMY_SYMBOL = '\0';
 
     private int state = 1; //Start at state number 1
     private int start;
@@ -89,6 +89,13 @@ class REcompile {
 
     private int term() {
 
+        //Case for escape character
+        if(splitExpression[position] == '\\') {
+            //Set whatever character comes after the \ as a literal, and add to the 
+            position++;
+
+        }
+
         int prevState = state - 1;
         int response = factor();
         
@@ -108,15 +115,17 @@ class REcompile {
         if(splitExpression[position] == '|') {
 
             //Re-set the next values for whatever state was added before the disjunction
-            if (next1[prevState] == response) {
-                next1[prevState] = state;
-            } else {
-                next2[prevState] = state;
-            }
+            // if (next1[prevState] == response) {
+            //     next1[prevState] = state;
+            // } else {
+            //     next2[prevState] = state;
+            // }
+            next1[prevState] = next2[prevState] = state;
 
             //Setup the disjunction state
             //One next points to the symbol just added, the next points to the state that is about to be created
             setState(state, BRANCH_SYMBOL, response, state + 1);
+            int returnVal = state;
             state++;
             position++;
 
@@ -130,9 +139,31 @@ class REcompile {
             next1[response] = next2[response] = state;
             state++;
 
-            return newTerm;
+            return returnVal;
 
         }
+
+        //Case for zero or one times
+        if(splitExpression[position] == '?') {
+
+            //Get the state of the symbol that was just added
+            int stateJustAdded = state - 1;
+
+            //Create the new branching state, one pointing towards the symbol just added, and another pointing to the next symbol to be added
+            position++;
+            setState(state, BRANCH_SYMBOL, prevState, state + 1);
+            state++;
+            
+            //Set the symbol preceding the ? symbol to point towards the next state
+            setState(stateJustAdded, characters[stateJustAdded], state, state);
+
+            //Return the zero/one branching state
+            return state - 1;
+
+        }
+
+        
+
     }
 
 

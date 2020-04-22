@@ -15,7 +15,12 @@ F -> ( E )
 
 E = Expression  
 T = Term  
-F = Function  
+F = Factor  
 v = Member of recognised vocabulary
 
 Expressions not matching this grammar will result in the program terminating with an error
+
+### Vocabulary
+- Any number or letter
+- The following symbols:
+, . / ? \ | = + - _ ! @ # $ %  ^ & * ( )
