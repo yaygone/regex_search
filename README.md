@@ -3,7 +3,7 @@
 #### Grammar
 
 E -> T  
-E -> T E  
+E -> T E
 T -> F  
 T -> F *  
 T -> F ?  
