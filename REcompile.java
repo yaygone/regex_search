@@ -5,6 +5,7 @@ class REcompile {
     private final char BRANCH_SYMBOL = ' ';
     private final char END_SYMBOL = ' ';
     private final char DUMMY_SYMBOL = ' ';
+    private final char WILDCARD_PLACEHOLDER = (char)26;
     private final char[] specialChars = {'.', '?', '*', '|'};
 
     private int state = 1; //Start at state number 1
@@ -62,9 +63,13 @@ class REcompile {
         setState(0, ' ', start, start);
 
         for (int i = 0; i < characters.length; i++) {
-            int intVal = characters[i];
-            //if wildcard here?
-            System.out.println("State: " + i + " Char: " + intVal + " N1: " + next1[i] + " N2: " + next2[i]);
+            if (characters[i] == WILDCARD_PLACEHOLDER) {
+                System.out.println("State: " + i + " Char: " + "." + " N1: " + next1[i] + " N2: " + next2[i]);
+            } else {
+                int intVal = characters[i];
+                System.out.println("State: " + i + " Char: " + intVal + " N1: " + next1[i] + " N2: " + next2[i]);
+            }
+            
         }
     }
 
@@ -84,10 +89,6 @@ class REcompile {
                     expression();
                 }
 
-                // else {
-                //     throwError(splitExpression[position]);
-                // }
-    
             }
             
             else {
@@ -107,8 +108,11 @@ class REcompile {
         
         
         //Case for escape char
-        if(position < splitExpression.length &&splitExpression[position] == '\\') response = factor() - 1;
+        if(position < splitExpression.length && splitExpression[position] == '\\') response = factor() - 1;
         
+        //Case for wildcard
+        if(position < splitExpression.length && splitExpression[position] == '.') response = factor() - 1;
+
         //Case for closure
         if(position < splitExpression.length && splitExpression[position] == '*') {
             position++;
@@ -171,16 +175,6 @@ class REcompile {
                 next1[f] = next2[f] = state;
             }
 
-            //Special case for zero or one occurances
-            // if (response - 1 > 0) {
-            //     if (next1[response - 1] == returnVal) {
-            //         next1[response - 1] = state;
-            //     }
-            //     if (next2[response - 1] == returnVal) {
-            //         next2[response - 1] = state;
-            //     }
-            // }
-
             state++;
 
             response = returnVal;
@@ -205,6 +199,16 @@ class REcompile {
             state++;
             return response;
         }
+
+        //If it's a wildcard, insert the wildcard placeholder
+        if(splitExpression[position] == '.') {
+            setState(state, WILDCARD_PLACEHOLDER, state + 1, state + 1);
+            position++;
+            response = state;
+            state++;
+            return response;
+        }
+        
 
         //If it's in the vocab, set the state, and then continue to the next character
         if(isInVocab(splitExpression[position])) {
