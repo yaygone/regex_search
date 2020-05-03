@@ -2,9 +2,9 @@ import java.util.*;
 
 class REcompile {
 
-    private final char BRANCH_SYMBOL = '^';
-    private final char END_SYMBOL = '?';
-    private final char DUMMY_SYMBOL = '*';
+    private final char BRANCH_SYMBOL = ' ';
+    private final char END_SYMBOL = ' ';
+    private final char DUMMY_SYMBOL = ' ';
     private final char[] specialChars = {'.', '?', '*', '|'};
 
     private int state = 1; //Start at state number 1
@@ -62,7 +62,9 @@ class REcompile {
         setState(0, ' ', start, start);
 
         for (int i = 0; i < characters.length; i++) {
-            System.out.println("State: " + i + " Char: " + characters[i] + " N1: " + next1[i] + " N2: " + next2[i]);
+            int intVal = characters[i];
+            //if wildcard here?
+            System.out.println("State: " + i + " Char: " + intVal + " N1: " + next1[i] + " N2: " + next2[i]);
         }
     }
 
@@ -74,10 +76,7 @@ class REcompile {
             response = term();
 
             if(position < splitExpression.length) {
-                //Make sure an expression doesn't start with a special character
-                // if (isSpecialCharacter(splitExpression[position])) {
-                //     throwError(splitExpression[position]);
-                // } 
+                
 
                 //Check if it's in the vocab, or if it's an opening bracket
                 if (isInVocab(splitExpression[position]) || splitExpression[position] == '(' || splitExpression[position] == '|') {
@@ -101,20 +100,17 @@ class REcompile {
 
     private int term() {
 
-        //Case for escape character
-        if(splitExpression[position] == '\\') {
-            //Set whatever character comes after the \ as a literal, and add to the 
-            position++;
-
-        }
+        
         int response, t1;
         int prevState = state - 1;
         t1 = response = factor();
         
         
-        if (position < splitExpression.length) {
+        //Case for escape char
+        if(position < splitExpression.length &&splitExpression[position] == '\\') response = factor() - 1;
+        
         //Case for closure
-        if(splitExpression[position] == '*') {
+        if(position < splitExpression.length && splitExpression[position] == '*') {
             position++;
             setState(state, BRANCH_SYMBOL, response, state + 1);
             state++;
@@ -191,13 +187,6 @@ class REcompile {
 
         }
 
-        
-
-        
-
-    }
-
-
         return response;
 
     }
@@ -205,6 +194,17 @@ class REcompile {
     private int factor(){
 
         int response = 0;
+
+        //Case for escape character
+        if(splitExpression[position] == '\\') {
+            //Set whatever character comes after the \ as a literal
+            position++;
+            setState(state, splitExpression[position], state + 1, state + 1);
+            position++;
+            response = state;
+            state++;
+            return response;
+        }
 
         //If it's in the vocab, set the state, and then continue to the next character
         if(isInVocab(splitExpression[position])) {
@@ -242,10 +242,10 @@ class REcompile {
 
     private boolean isInVocab(char c) {
         //Check it's a printable character
-        // if (Character.isISOControl(c)) return false;
-        // return true;
-        if (Character.isLetter(c) || Character.isDigit(c)) return true;
+        if (!Character.isISOControl(c) && !isSpecialCharacter(c)) return true;
         return false;
+        // if (Character.isLetter(c) || Character.isDigit(c)) return true;
+        // return false;
     }
 
     private void throwError(char symbol) {
