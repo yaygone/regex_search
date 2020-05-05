@@ -54,9 +54,9 @@ class REcompile {
 
     private void compile() {
 
-        characters = new char[splitExpression.length];
-        next1 = new int[splitExpression.length];
-        next2 = new int[splitExpression.length];
+        characters = new char[1];
+        next1 = new int[1];
+        next2 = new int[1];
 
         int start = expression();
 
@@ -96,7 +96,7 @@ class REcompile {
             
             else {
     
-                setState(state, END_SYMBOL, 0, 0);
+                setState(state, END_SYMBOL, -1, -1);
 
             }
 
@@ -274,6 +274,7 @@ class REcompile {
             if(position < splitExpression.length) {
                 //If it's in the vocab, set the state, and then continue to the next character
                 if(isInVocab(splitExpression[position])) {
+                    
                     setState(state, splitExpression[position], state + 1, state + 1);
                     position++;
                     response = state;
