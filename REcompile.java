@@ -182,7 +182,8 @@ class REcompile {
                     t1 = term();
                     setState(closureState, BRANCH_SYMBOL, response, t1);
                     setState(stateJustAdded, characters[stateJustAdded], t1, t1);
-                    position = currPos;
+                    //position = currPos;
+                    return closureState;
                 }
             } else {
                 setState(state, BRANCH_SYMBOL, t1, state + 1);
