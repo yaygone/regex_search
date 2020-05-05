@@ -54,9 +54,9 @@ class REcompile {
 
     private void compile() {
 
-        characters = new char[splitExpression.length];
-        next1 = new int[splitExpression.length];
-        next2 = new int[splitExpression.length];
+        characters = new char[1];
+        next1 = new int[1];
+        next2 = new int[1];
 
         int start = expression();
 
@@ -77,8 +77,9 @@ class REcompile {
 
     private int expression() {
 
-        int response;
+        int response = 0;
 
+        
             //Get the term
             response = term();
 
@@ -95,9 +96,10 @@ class REcompile {
             
             else {
     
-                setState(state, END_SYMBOL, 0, 0);
+                setState(state, END_SYMBOL, -1, -1);
 
             }
+
         return response;
     }
 
@@ -140,7 +142,11 @@ class REcompile {
                         position++;
                         t1 = term();
                         setState(closureState, BRANCH_SYMBOL, response, t1);
-                        position = currPos;
+                        //int newPos = position;
+                        //position = currPos;
+                        //response = factor();
+                        //position = newPos;
+                        return closureState;
                     }
             }
             
@@ -243,52 +249,62 @@ class REcompile {
 
     private int factor(){
 
-        int response = 0;
+        int response = state;
 
-        //Case for escape character
-        if(position < splitExpression.length && splitExpression[position] == '\\') {
-            //Set whatever character comes after the \ as a literal
-            position++;
-            setState(state, splitExpression[position], state + 1, state + 1);
-            position++;
-            response = state;
-            state++;
-            return response;
-        }
-
-        //If it's a wildcard, insert the wildcard placeholder
-        if(position < splitExpression.length && splitExpression[position] == '.') {
-            setState(state, WILDCARD_PLACEHOLDER, state + 1, state + 1);
-            position++;
-            response = state;
-            state++;
-            return response;
-        }
-        
-
-        //If it's in the vocab, set the state, and then continue to the next character
-        if(isInVocab(splitExpression[position])) {
-            setState(state, splitExpression[position], state + 1, state + 1);
-            position++;
-            response = state;
-            state++;
-        } else {
-            //For an opening bracket, go to next char, create a new expression
-            if(splitExpression[position] == '(') {
+            //Case for escape character
+            if(position < splitExpression.length && splitExpression[position] == '\\') {
+                //Set whatever character comes after the \ as a literal
                 position++;
-                response = expression();
-            
-                //Check that the bracket was closed, and then move on
-                if(splitExpression[position] == ')') {
-                    position++;
-
-                } else { throwError(splitExpression[position]); }
-
-            } else {
-                throwError(splitExpression[position]);
+                setState(state, splitExpression[position], state + 1, state + 1);
+                position++;
+                response = state;
+                state++;
+                return response;
             }
-        }
 
+            //If it's a wildcard, insert the wildcard placeholder
+            if(position < splitExpression.length && splitExpression[position] == '.') {
+                setState(state, WILDCARD_PLACEHOLDER, state + 1, state + 1);
+                position++;
+                response = state;
+                state++;
+                return response;
+            }
+
+            if(position < splitExpression.length) {
+                //If it's in the vocab, set the state, and then continue to the next character
+                if(isInVocab(splitExpression[position])) {
+                    
+                    setState(state, splitExpression[position], state + 1, state + 1);
+                    position++;
+                    response = state;
+                    state++;
+                } 
+                
+                else {
+                    //For an opening bracket, go to next char, create a new expression
+                    if(splitExpression[position] == '(') {
+                        position++;
+                        response = expression();
+                        if (position >= splitExpression.length) {
+                            return response;
+                        }
+                    
+                        //Check that the bracket was closed, and then move on
+                        if(splitExpression[position] == ')') {
+                            position++;
+
+                        } else { throwError(splitExpression[position]); }
+
+                    } else {
+                        throwError(splitExpression[position]);
+                    }
+                        }
+                        
+                }
+
+                    
+        
         return response;
 
     }
