@@ -6,7 +6,7 @@ class REcompile {
     private final char END_SYMBOL = ' ';
     private final char DUMMY_SYMBOL = ' ';
     private final char WILDCARD_PLACEHOLDER = (char)26;
-    private final char[] specialChars = {'.', '?', '*', '|'};
+    private final char[] specialChars = {'.', '?', '*', '|', '(', ')'};
 
     private int state = 1; //Start at state number 1
     private int start;
@@ -67,7 +67,9 @@ class REcompile {
                 System.out.println("State: " + i + " Char: " + "." + " N1: " + next1[i] + " N2: " + next2[i]);
             } else {
                 int intVal = characters[i];
-                System.out.println("State: " + i + " Char: " + intVal + " N1: " + next1[i] + " N2: " + next2[i]);
+                //System.out.println("State: " + i + " Char: " + intVal + " N1: " + next1[i] + " N2: " + next2[i]);
+                System.out.println("State: " + i + " Char: " + characters[i] + " N1: " + next1[i] + " N2: " + next2[i]);
+
             }
             
         }
@@ -115,13 +117,38 @@ class REcompile {
 
         //Case for closure
         if(position < splitExpression.length && splitExpression[position] == '*') {
+            
             position++;
+            int closureState = state;
             setState(state, BRANCH_SYMBOL, response, state + 1);
+            if (prevState > 0) setState(prevState, characters[prevState], state, state);
             state++;
+
+            //If this is the end of the expression
+            if(position + 2 >= splitExpression.length) {
+                if (position < splitExpression.length && splitExpression[position] == ')') {
+                    return closureState;
+                }
+            }
+
+            if(position < splitExpression.length)  {
+                    if (splitExpression[position] != ')') {
+                        t1 = term();
+                        setState(closureState, BRANCH_SYMBOL, response, t1);
+                    } else {
+                        int currPos = position;
+                        position++;
+                        t1 = term();
+                        setState(closureState, BRANCH_SYMBOL, response, t1);
+                        position = currPos;
+                    }
+            }
+            
+            
 
             //Return the closures branching state
             //return state - 1;
-            response = state - 1;
+            response = closureState;
         }
 
         //Case for zero or one times
@@ -129,17 +156,46 @@ class REcompile {
 
             //Get the state of the symbol that was just added
             int stateJustAdded = state - 1;
+            int closureState = state;
 
             //Create the new branching state, one pointing towards the symbol just added, and another pointing to the next symbol to be added
             position++;
-            setState(state, BRANCH_SYMBOL, stateJustAdded, state + 1);
+            setState(state, BRANCH_SYMBOL, t1, state + 1);
+            setState(stateJustAdded, characters[stateJustAdded], state + 1, state + 1);
             state++;
+
+
+            if(position < splitExpression.length)  {
+                if (splitExpression[position] != ')') {
+                    t1 = term();
+                    setState(closureState, BRANCH_SYMBOL, response, t1);
+                    setState(stateJustAdded, characters[stateJustAdded], t1, t1);
+                } else {
+                    int currPos = position;
+                    position++;
+                    t1 = term();
+                    setState(closureState, BRANCH_SYMBOL, response, t1);
+                    setState(stateJustAdded, characters[stateJustAdded], t1, t1);
+                    position = currPos;
+                }
+            } else {
+                setState(state, BRANCH_SYMBOL, t1, state + 1);
+            }
+
+            //If this is the end of the expression
+            if(position + 2 >= splitExpression.length) {
+                if (position < splitExpression.length && splitExpression[position] == ')') {
+                    return closureState;
+                }
+            }
             
             //Set the symbol preceding the ? symbol to point towards the next state
-            setState(stateJustAdded, characters[stateJustAdded], state, state);
+            //setState(t1, characters[stateJustAdded], state, state);
+
+            
 
             //Return the zero/one branching state
-            response = state - 1;
+            response = closureState;
 
         }
 
@@ -190,7 +246,7 @@ class REcompile {
         int response = 0;
 
         //Case for escape character
-        if(splitExpression[position] == '\\') {
+        if(position < splitExpression.length && splitExpression[position] == '\\') {
             //Set whatever character comes after the \ as a literal
             position++;
             setState(state, splitExpression[position], state + 1, state + 1);
@@ -201,7 +257,7 @@ class REcompile {
         }
 
         //If it's a wildcard, insert the wildcard placeholder
-        if(splitExpression[position] == '.') {
+        if(position < splitExpression.length && splitExpression[position] == '.') {
             setState(state, WILDCARD_PLACEHOLDER, state + 1, state + 1);
             position++;
             response = state;
