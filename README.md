@@ -1,5 +1,7 @@
-# COMPX301-A2
-
+# COMPX301-20A
+# Assignment 2
+Ye-Gon Ryoo 1126331
+Tristan Brynildsen 1348237
 #### Grammar
 
 E -> T  
@@ -21,6 +23,6 @@ v = Member of recognised vocabulary
 Expressions not matching this grammar will result in the program terminating with an error
 
 ### Vocabulary
-- Any number or letter
+- Any number, letter, or space
 - The following symbols:
 , . / ? \ | = + - _ ! @ # $ %  ^ & * ( )

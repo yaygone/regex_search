@@ -1,6 +1,9 @@
 import java.io.*;
 import java.util.*;
 
+/**
+ * @author Ye-Gon Ryoo
+ */
 class REsearch extends Thread
 {
 	static List<ParseTableNode> parseTable = new ArrayList<ParseTableNode>();
@@ -8,20 +11,19 @@ class REsearch extends Thread
 	/**
 	 * Main class requires two inner classes: 
 	 * one to recreate the FSM, and one for the deque navigation.
-	 * @author YR
-	 * @param args
+	 * @author Ye-Gon Ryoo
 	 */
 	public static void main(String[] args)
 	{ try { new REsearch().run(args[0]); } catch (Exception e) { System.err.println(e); } }
 
 	public void run(String inputFile) throws IOException, InterruptedException
 	{
-		// Take input from REcompile - assuming form "selfIndex,char,next1,next2" "1,a,2,2" for example
+		// Take input from REcompile - assuming form "selfIndex,char,next1,next2" "1,97,2,2" for example
 		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 		for (String s = reader.readLine(); s != null; s = reader.readLine())
 		{
 			String[] elements = s.split(",");
-			parseTable.add(Integer.parseInt(elements[0]), new ParseTableNode(elements[1], Integer.parseInt(elements[2]), Integer.parseInt(elements[3])));
+			parseTable.add(new ParseTableNode((char)Integer.parseInt(elements[1]), Integer.parseInt(elements[2]), Integer.parseInt(elements[3])));
 		}
 		reader.close();
 		
@@ -55,7 +57,7 @@ class REsearch extends Thread
 					}
 					
 					// If the current character matches, or is a wildcard, then add the head's next to tail for future.
-					else if (poppedHead.ch == input.charAt(inputIndex) || poppedHead.ch == '.')
+					else if (poppedHead.ch == input.charAt(inputIndex) || poppedHead.ch == 26)
 						deque.tailAdd(poppedHead.next1);
 					
 					// If the current character doesn't match, this path/branch/whatever is dead. Move on to the next iteration.
@@ -73,7 +75,7 @@ class REsearch extends Thread
 	 * Reconstructs the FSM based on stdin. Indexes are assumed from 1.
 	 * Currently one class only, may be expanded to two subclasses 
 	 * (one for branching machine, one for char match)
-	 * @author YR
+	 * @author Ye-Gon Ryoo
 	 */
 	class ParseTableNode
 	{
@@ -81,9 +83,9 @@ class REsearch extends Thread
 		int next1;
 		int next2;
 
-		public ParseTableNode(String s, int n1, int n2)
+		public ParseTableNode(char s, int n1, int n2)
 		{
-			ch = (s.equals("")) ? 0 : s.charAt(0);
+			ch = s;
 			next1 = n1;
 			next2 = n2;
 		}
@@ -95,7 +97,7 @@ class REsearch extends Thread
 	/**
 	 * Deque for traversing the array of ParseNode for matching pattern
 	 * to an input.
-	 * @author YR
+	 * @author Ye-Gon Ryoo
 	 */
 	class Deque
 	{
