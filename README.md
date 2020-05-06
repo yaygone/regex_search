@@ -6,6 +6,7 @@ Tristan Brynildsen 1348237
 
 E -> T  
 E -> T E
+
 T -> F  
 T -> F *  
 T -> F ?  
