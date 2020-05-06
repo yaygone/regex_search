@@ -11,7 +11,7 @@ T -> F *
 T -> F ?  
 T -> F | T  
 T -> . F  
-T -> \ E  
+T -> \ F  
 F -> v  
 F -> ( E )  
 
@@ -23,6 +23,4 @@ v = Member of recognised vocabulary
 Expressions not matching this grammar will result in the program terminating with an error
 
 ### Vocabulary
-- Any number, letter, or space
-- The following symbols:
-, . / ? \ | = + - _ ! @ # $ %  ^ & * ( )
+- Any printable (non-control) character
